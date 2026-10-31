@@ -1,0 +1,396 @@
+@startuml SmartStay_ClassDiagram
+' ======================================================================
+'  SmartStay Hotel Booking System - UML Class Diagram
+'  BEFORE SUBMITTING: use Find & Replace to change every "KUID" into your
+'  Kingston University student ID (e.g. KUID_Room -> K2412345_Room).
+'  Render at https://www.plantuml.com/plantuml or with any PlantUML tool.
+' ======================================================================
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #1D4E89
+  ArrowColor #0B2545
+  HeaderBackgroundColor #E8F0FB
+}
+hide empty members
+left to right direction
+
+package "model" {
+  abstract class KUID_User {
+    - userId : String
+    - fullName : String
+    - passwordHash : String
+    - passwordSalt : String
+    - recoveryCodeHash : String
+    - recoveryCodeSalt : String
+    # KUID_User(userId, fullName, passwordHash, passwordSalt, recoveryCodeHash, recoveryCodeSalt)
+    + {abstract} getRole() : KUID_UserRole
+    + {abstract} getLoginName() : String
+    + isAdministrator() : boolean
+    + getUserId() : String
+    + getFullName() : String
+    + setPasswordDetails(hash : String, salt : String) : void
+    + setRecoveryCodeDetails(hash : String, salt : String) : void
+  }
+
+  class KUID_Administrator {
+    - username : String
+    + getUsername() : String
+    + getRole() : KUID_UserRole
+    + getLoginName() : String
+  }
+
+  class KUID_Guest {
+    - nicOrPassport : String
+    - contactNumber : String
+    - email : String
+    + getGuestId() : String
+    + getNicOrPassport() : String
+    + getContactNumber() : String
+    + getEmail() : String
+    + getRole() : KUID_UserRole
+    + getLoginName() : String
+  }
+
+  enum KUID_UserRole {
+    ADMINISTRATOR
+    GUEST
+  }
+
+  class KUID_Room {
+    - roomId : String
+    - roomType : KUID_RoomType
+    - bedType : KUID_BedType
+    - maintenanceStatus : KUID_RoomStatus
+    + getDailyRate() : BigDecimal
+    + isUnderMaintenance() : boolean
+    + setRoomType(type : KUID_RoomType) : void
+    + setBedType(type : KUID_BedType) : void
+    + setMaintenanceStatus(status : KUID_RoomStatus) : void
+  }
+
+  enum KUID_RoomType {
+    STANDARD
+    DELUXE
+    SUITE
+    FAMILY_SUITE
+    --
+    - dailyRate : BigDecimal
+    - complimentaryBreakfast : boolean
+    - extraGuestCharge : BigDecimal
+    - taxRate : BigDecimal
+    - standardCapacity : int
+    + getMaximumGuests() : int
+    + getTaxPercentage() : int
+  }
+
+  enum KUID_BedType {
+    SINGLE
+    DOUBLE
+    QUEEN
+    KING
+  }
+
+  enum KUID_RoomStatus {
+    AVAILABLE
+    RESERVED
+    UNDER_MAINTENANCE
+  }
+
+  class KUID_Reservation {
+    - bookingId : String
+    - guestId : String
+    - roomId : String
+    - roomType : KUID_RoomType
+    - numberOfGuests : int
+    - checkInDate : LocalDate
+    - checkOutDate : LocalDate
+    - bookingDateTime : LocalDateTime
+    - advancePaid : BigDecimal
+    - status : KUID_BookingStatus
+    - cancelledDateTime : LocalDateTime
+    + getNumberOfNights() : long
+    + isActive() : boolean
+    + isCurrentOrUpcoming(today : LocalDate) : boolean
+    + cancel(when : LocalDateTime) : void
+    + setStayDates(checkIn : LocalDate, checkOut : LocalDate) : void
+    + setNumberOfGuests(guests : int) : void
+  }
+
+  enum KUID_BookingStatus {
+    CONFIRMED
+    CANCELLED
+  }
+
+  class KUID_Invoice {
+    - generatedDateTime : LocalDateTime
+    - numberOfNights : long
+    - extraGuests : int
+    - baseRoomCharge : BigDecimal
+    - extraGuestCharge : BigDecimal
+    - discount : BigDecimal
+    - taxableAmount : BigDecimal
+    - tax : BigDecimal
+    - totalCharge : BigDecimal
+    - advanceDeducted : BigDecimal
+    - finalPayable : BigDecimal
+    - refundDue : BigDecimal
+    + isDiscountApplied() : boolean
+  }
+}
+
+package "security" {
+  class KUID_PasswordUtil <<utility>> {
+    - {static} ITERATIONS : int = 65536
+    + {static} generateSalt() : String
+    + {static} hashPassword(password : char[], salt : String) : String
+    + {static} verifyPassword(password : char[], hash : String, salt : String) : boolean
+    + {static} checkStrength(password : char[]) : String
+    + {static} generateRecoveryCode() : String
+    + {static} hashRecoveryCode(code : String, salt : String) : String
+  }
+
+  class KUID_SessionManager <<singleton>> {
+    - {static} INSTANCE : KUID_SessionManager
+    - currentUser : KUID_User
+    - loginTime : LocalDateTime
+    + {static} getInstance() : KUID_SessionManager
+    + startSession(user : KUID_User) : void
+    + endSession() : void
+    + invalidateSessionsFor(userId : String) : void
+    + getCurrentUser() : KUID_User
+    + getCurrentGuest() : KUID_Guest
+  }
+
+  class KUID_AccessControl <<utility>> {
+    + {static} requireLogin() : KUID_User
+    + {static} requireAdministrator() : void
+    + {static} requireGuest() : KUID_Guest
+    + {static} requireReservationAccess(r : KUID_Reservation) : void
+  }
+
+  class KUID_PasswordResetToken {
+    - userId : String
+    - recoveryHashAtVerification : String
+    - expiresAt : LocalDateTime
+    - used : boolean
+    + isUsable() : boolean
+    + markUsed() : void
+  }
+
+  class KUID_AccessDeniedException
+}
+
+package "storage" {
+  class KUID_DataStore <<singleton>> {
+    - administrators : ArrayList<KUID_Administrator>
+    - guests : ArrayList<KUID_Guest>
+    - guestsById : HashMap<String, KUID_Guest>
+    - guestsByEmail : HashMap<String, KUID_Guest>
+    - guestsByNic : HashMap<String, KUID_Guest>
+    - rooms : ArrayList<KUID_Room>
+    - roomsById : HashMap<String, KUID_Room>
+    - reservations : ArrayList<KUID_Reservation>
+    - reservationsById : HashMap<String, KUID_Reservation>
+    + {static} getInstance() : KUID_DataStore
+    + loadAll() : void
+    + saveGuests() : void
+    + saveRooms() : void
+    + saveReservations() : void
+    + findGuestByEmail(email : String) : KUID_Guest
+    + findRoomById(id : String) : KUID_Room
+    + findReservationById(id : String) : KUID_Reservation
+    + addReservation(r : KUID_Reservation) : void
+  }
+}
+
+package "util" {
+  class KUID_BookingValidator <<utility>> {
+    + {static} MIN_DAYS_IN_ADVANCE : int = 2
+    + {static} CHANGE_CUTOFF_HOURS : int = 24
+    + {static} validateStayDates(in, out, today) : void
+    + {static} validateGuestCount(type, guests) : void
+    + {static} datesOverlap(aIn, aOut, bIn, bOut) : boolean
+    + {static} calculateNights(in, out) : long
+    + {static} isChangeAllowed(checkIn, now) : boolean
+    + {static} validateAdvance(amount : BigDecimal) : void
+  }
+
+  class KUID_InvoiceCalculator <<utility>> {
+    + {static} BOOKING_ADVANCE : BigDecimal = 10000
+    + {static} LONG_STAY_DISCOUNT_RATE : BigDecimal = 0.12
+    + {static} calculateBaseCharge(type, nights) : BigDecimal
+    + {static} calculateExtraGuestCharge(type, guests, nights) : BigDecimal
+    + {static} calculateDiscount(base, nights) : BigDecimal
+    + {static} calculateTax(type, taxable) : BigDecimal
+    + {static} calculate(r, guest, room) : KUID_Invoice
+  }
+
+  class KUID_SortUtil <<utility>> {
+    + {static} mergeSort(items : List<T>, c : Comparator<T>) : List<T>
+  }
+
+  class KUID_InputValidator <<utility>> {
+    + {static} isValidEmail(email : String) : boolean
+    + {static} isValidContactNumber(n : String) : boolean
+    + {static} isValidNicOrPassport(v : String) : boolean
+    + {static} isValidRoomId(id : String) : boolean
+  }
+}
+
+package "service" {
+  class KUID_AuthenticationService {
+    + isAdministratorSetupRequired() : boolean
+    + createInitialAdministrator(...) : KUID_AccountCreationResult
+    + loginAdministrator(username : String, pw : char[]) : KUID_Administrator
+    + loginGuest(email : String, pw : char[]) : KUID_Guest
+    + logout() : void
+  }
+
+  class KUID_GuestService {
+    + registerGuest(nic, name, contact, email, pw, confirm) : KUID_AccountCreationResult
+    + getGuestById(id : String) : KUID_Guest
+  }
+
+  class KUID_PasswordRecoveryService {
+    - {static} FAILED_ATTEMPTS : HashMap<String, Integer>
+    - {static} LOCKED_UNTIL : HashMap<String, LocalDateTime>
+    + verifyGuestRecoveryCode(email, code) : KUID_PasswordResetToken
+    + verifyAdministratorRecoveryCode(username, code) : KUID_PasswordResetToken
+    + resetPassword(token, pw, confirm) : KUID_AccountCreationResult
+  }
+
+  class KUID_AccountCreationResult {
+    - user : KUID_User
+    - recoveryCode : String
+  }
+
+  class KUID_RoomService {
+    + addRoom(id, type, bed) : KUID_Room
+    + updateRoom(id, type, bed) : KUID_Room
+    + deleteRoom(id : String) : void
+    + changeAvailabilityStatus(id, status) : void
+    + searchRooms(keyword, type, status) : List<KUID_Room>
+    + findAvailableRooms(type, in, out, guests) : List<KUID_Room>
+    + isRoomAvailableForDates(id, in, out, ignoreId) : boolean
+    + getCurrentStatus(room : KUID_Room) : KUID_RoomStatus
+    + sortByPrice(rooms, lowestFirst) : List<KUID_Room>
+  }
+
+  class KUID_ReservationService {
+    + createReservation(type, roomId, guests, in, out) : KUID_Reservation
+    + getVisibleReservations() : List<KUID_Reservation>
+    + searchReservations(keyword, checkIn) : List<KUID_Reservation>
+    + cancelReservation(bookingId : String) : KUID_Reservation
+    + modifyReservation(bookingId, guests, in, out) : KUID_Reservation
+    + canChange(r : KUID_Reservation) : boolean
+    + sortByCheckInDate(list) : List<KUID_Reservation>
+  }
+
+  class KUID_InvoiceService {
+    + getInvoice(bookingId : String) : KUID_Invoice
+    + previewCharges(type, roomId, guests, in, out) : KUID_Invoice
+  }
+}
+
+package "ui (Java Swing)" {
+  abstract class KUID_BaseFrame {
+    # getContentArea() : JPanel
+    # navigateTo(next : JFrame) : void
+    # goToDashboard() : void
+    # logout() : void
+  }
+  abstract class KUID_AuthFrame {
+    # addField(label, field) : void
+    # addButtons(main, others...) : void
+  }
+  class KUID_WelcomeFrame
+  class KUID_AdminLoginFrame
+  class KUID_GuestLoginFrame
+  class KUID_GuestRegistrationFrame
+  class KUID_GuestForgotPasswordFrame
+  class KUID_GuestResetPasswordFrame
+  class KUID_AdminForgotPasswordFrame
+  class KUID_AdminDashboardFrame
+  class KUID_GuestDashboardFrame
+  class KUID_RoomManagementFrame
+  class KUID_AvailableRoomsFrame
+  class KUID_ReservationFrame
+  class KUID_ReservationManagementFrame
+  class KUID_InvoiceFrame
+  class KUID_MainApplication {
+    + {static} main(args : String[]) : void
+  }
+}
+
+' ---------- Inheritance ----------
+KUID_User <|-- KUID_Administrator
+KUID_User <|-- KUID_Guest
+KUID_BaseFrame <|-- KUID_AdminDashboardFrame
+KUID_BaseFrame <|-- KUID_GuestDashboardFrame
+KUID_BaseFrame <|-- KUID_RoomManagementFrame
+KUID_BaseFrame <|-- KUID_AvailableRoomsFrame
+KUID_BaseFrame <|-- KUID_ReservationFrame
+KUID_BaseFrame <|-- KUID_ReservationManagementFrame
+KUID_BaseFrame <|-- KUID_InvoiceFrame
+KUID_AuthFrame <|-- KUID_AdminLoginFrame
+KUID_AuthFrame <|-- KUID_GuestLoginFrame
+KUID_AuthFrame <|-- KUID_GuestRegistrationFrame
+KUID_AuthFrame <|-- KUID_GuestForgotPasswordFrame
+KUID_AuthFrame <|-- KUID_GuestResetPasswordFrame
+KUID_AuthFrame <|-- KUID_AdminForgotPasswordFrame
+
+' ---------- Associations (with multiplicity) ----------
+KUID_Guest "1" -- "0..*" KUID_Reservation : makes >
+KUID_Room "1" -- "0..*" KUID_Reservation : is booked by >
+KUID_Reservation "1" -- "1" KUID_Invoice : billed by >
+KUID_Invoice "0..*" --> "1" KUID_Guest : bills >
+KUID_Invoice "0..*" --> "0..1" KUID_Room : describes >
+KUID_Room "0..*" --> "1" KUID_RoomType
+KUID_Room "0..*" --> "1" KUID_BedType
+KUID_Room "0..*" --> "1" KUID_RoomStatus
+KUID_Reservation "0..*" --> "1" KUID_RoomType : price snapshot
+KUID_Reservation "0..*" --> "1" KUID_BookingStatus
+KUID_User ..> KUID_UserRole
+KUID_SessionManager "1" o-- "0..1" KUID_User : current user
+KUID_AccountCreationResult "1" --> "1" KUID_User
+
+' ---------- Composition: DataStore owns the collections ----------
+KUID_DataStore "1" *-- "0..*" KUID_Guest
+KUID_DataStore "1" *-- "0..*" KUID_Administrator
+KUID_DataStore "1" *-- "0..*" KUID_Room
+KUID_DataStore "1" *-- "0..*" KUID_Reservation
+
+' ---------- Dependencies (uses) ----------
+KUID_AuthenticationService ..> KUID_DataStore
+KUID_AuthenticationService ..> KUID_PasswordUtil
+KUID_AuthenticationService ..> KUID_SessionManager
+KUID_GuestService ..> KUID_DataStore
+KUID_GuestService ..> KUID_InputValidator
+KUID_PasswordRecoveryService ..> KUID_PasswordResetToken : creates
+KUID_PasswordRecoveryService ..> KUID_SessionManager
+KUID_RoomService ..> KUID_AccessControl
+KUID_RoomService ..> KUID_BookingValidator
+KUID_RoomService ..> KUID_SortUtil
+KUID_ReservationService --> KUID_RoomService
+KUID_ReservationService ..> KUID_BookingValidator
+KUID_ReservationService ..> KUID_AccessControl
+KUID_InvoiceService --> KUID_ReservationService
+KUID_InvoiceService ..> KUID_InvoiceCalculator
+KUID_InvoiceCalculator ..> KUID_Invoice : creates
+KUID_AccessControl ..> KUID_AccessDeniedException : throws
+KUID_AccessControl ..> KUID_SessionManager
+
+KUID_MainApplication ..> KUID_DataStore
+KUID_MainApplication ..> KUID_WelcomeFrame
+KUID_AdminDashboardFrame ..> KUID_RoomService
+KUID_AdminDashboardFrame ..> KUID_ReservationService
+KUID_ReservationFrame ..> KUID_ReservationService
+KUID_ReservationFrame ..> KUID_InvoiceService
+KUID_InvoiceFrame ..> KUID_InvoiceService
+KUID_GuestForgotPasswordFrame ..> KUID_PasswordRecoveryService
+KUID_AdminForgotPasswordFrame ..> KUID_PasswordRecoveryService
+@enduml

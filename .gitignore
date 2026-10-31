@@ -1,0 +1,5 @@
+/data/
+/build/
+/dist/
+/nbproject/private/
+*.backup_*
