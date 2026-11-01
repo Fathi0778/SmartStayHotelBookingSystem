@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import smartstay.model.Administrator;
 import smartstay.service.AuthenticationService;
 
 /**
@@ -61,8 +62,13 @@ public class AdminLoginFrame extends AuthFrame {
 
     private void login() {
         try {
-            authService.loginAdministrator(usernameField.getText(), passwordField.getPassword());
-            navigateTo(new AdminDashboardFrame());
+            Administrator admin = authService.loginAdministrator(usernameField.getText(),
+                    passwordField.getPassword());
+            AdminDashboardFrame dashboard = new AdminDashboardFrame();
+            navigateTo(dashboard);
+            // Show the message on top of the dashboard that has just opened.
+            UITheme.showMessageLater(dashboard, "Login Successful",
+                    "Successfully logged in!\nWelcome, " + admin.getFullName() + " (Administrator).");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             passwordField.setText("");
             UITheme.showError(this, ex.getMessage());

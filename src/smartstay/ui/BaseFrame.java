@@ -144,8 +144,13 @@ public abstract class BaseFrame extends JFrame {
     /** Asks for confirmation, clears the session and returns to the Welcome page. */
     protected void logout() {
         if (UITheme.confirm(this, "Are you sure you want to log out?", "Logout")) {
+            String name = SessionManager.getInstance().isLoggedIn()
+                    ? SessionManager.getInstance().getCurrentUser().getFullName() : "";
             new AuthenticationService().logout();
-            navigateTo(new WelcomeFrame());
+            WelcomeFrame welcome = new WelcomeFrame();
+            navigateTo(welcome);
+            UITheme.showMessageLater(welcome, "Logout Successful",
+                    "Successfully logged out!\nGoodbye" + (name.isEmpty() ? "." : ", " + name + "."));
         }
     }
 

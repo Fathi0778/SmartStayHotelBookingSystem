@@ -331,6 +331,19 @@ public final class UITheme {
         JOptionPane.showMessageDialog(parent, message, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    /**
+     * Shows an information message just after a new screen has appeared,
+     * so the message sits on top of that screen (used for login/logout).
+     */
+    public static void showMessageLater(final Component parent, final String title, final String message) {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                JOptionPane.showMessageDialog(parent, message, title, JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+    }
+
     public static boolean confirm(Component parent, String message, String title) {
         int choice = JOptionPane.showConfirmDialog(parent, message, title,
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
