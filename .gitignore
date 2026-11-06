@@ -3,3 +3,5 @@
 /dist/
 /nbproject/private/
 *.backup_*
+data_old/administrators.txt
+/data_old
