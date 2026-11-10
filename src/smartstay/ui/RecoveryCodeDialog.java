@@ -33,6 +33,7 @@ public class RecoveryCodeDialog extends JDialog {
 
     public RecoveryCodeDialog(Window owner, String heading, final String recoveryCode) {
         super(owner, "Your Recovery Code", ModalityType.APPLICATION_MODAL);
+        setIconImages(LogoMark.createWindowIcons());
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
         JPanel content = new JPanel(new BorderLayout(0, 16));

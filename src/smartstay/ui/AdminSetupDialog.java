@@ -38,6 +38,7 @@ public class AdminSetupDialog extends JDialog {
 
     public AdminSetupDialog(JFrame owner) {
         super(owner, "First-time Administrator Setup", true);
+        setIconImages(LogoMark.createWindowIcons());
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JPanel content = new JPanel(new BorderLayout(0, 16));

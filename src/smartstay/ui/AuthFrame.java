@@ -40,6 +40,7 @@ public abstract class AuthFrame extends JFrame {
 
     protected AuthFrame(String title, String subtitle, int cardWidth) {
         super("SmartStay Hotel Booking System - " + title);
+        setIconImages(LogoMark.createWindowIcons());
         this.cardWidth = cardWidth;
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(900, 640));

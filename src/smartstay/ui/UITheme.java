@@ -144,6 +144,7 @@ public final class UITheme {
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(value, min, max, 1));
         spinner.setFont(FONT_BODY);
         spinner.setPreferredSize(new Dimension(90, FIELD_HEIGHT));
+        ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setHorizontalAlignment(JTextField.LEFT);
         return spinner;
     }
 

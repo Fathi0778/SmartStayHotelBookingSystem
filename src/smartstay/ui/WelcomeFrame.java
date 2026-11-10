@@ -52,6 +52,7 @@ public class WelcomeFrame extends JFrame {
 
     public WelcomeFrame() {
         super("SmartStay Hotel Booking System");
+        setIconImages(LogoMark.createWindowIcons());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1080, 700));
         setSize(1240, 780);

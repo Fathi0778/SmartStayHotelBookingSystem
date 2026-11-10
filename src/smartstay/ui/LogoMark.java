@@ -5,12 +5,17 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JComponent;
 
 /**
  * The SmartStay logo: a gold rounded square with a navy "S" and a small
  * roof line, drawn with Java 2D so no image files are needed.
+ * The same drawing is used for the window icon in the title bar.
  */
 public class LogoMark extends JComponent {
 
@@ -26,6 +31,28 @@ public class LogoMark extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
+        draw(g2, size);
+        g2.dispose();
+    }
+
+    /**
+     * The logo in several sizes for the title bar and taskbar, so the
+     * default Java icon is replaced by the SmartStay logo.
+     */
+    public static List<Image> createWindowIcons() {
+        List<Image> icons = new ArrayList<>();
+        int[] sizes = {16, 20, 24, 32, 40, 48, 64, 128};
+        for (int iconSize : sizes) {
+            BufferedImage image = new BufferedImage(iconSize, iconSize, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = image.createGraphics();
+            draw(g2, iconSize);
+            g2.dispose();
+            icons.add(image);
+        }
+        return icons;
+    }
+
+    private static void draw(Graphics2D g2, int size) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -47,6 +74,5 @@ public class LogoMark extends JComponent {
         int x = (size - metrics.stringWidth(letter)) / 2;
         int y = size / 2 + metrics.getAscent() / 2 + size / 14;
         g2.drawString(letter, x, y);
-        g2.dispose();
     }
 }

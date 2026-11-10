@@ -33,6 +33,7 @@ public abstract class BaseFrame extends JFrame {
 
     protected BaseFrame(String pageTitle, String pageSubtitle) {
         super("SmartStay Hotel Booking System - " + pageTitle);
+        setIconImages(LogoMark.createWindowIcons());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1080, 680));
         setSize(1240, 760);
